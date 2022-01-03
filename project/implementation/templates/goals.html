@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Goals
+{% endblock %}
+
+{% block main %}
+    <h1>
+        Goals
+    </h1>
+    <h2>
+        List your self-care goals here!
+    </h2>
+    <img alt="bullseye on tree" src="static/target_image.jpg" width="50%">
+    <div>
+        <form action="/goals" method="post">
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="addgoal" placeholder="New Goal" type="text">
+            </div>
+            <div class="mb-3">
+                <button class="btn btn-info" type="submit">Add Goal</button>
+            </div>
+        </form>
+    </div>
+    <div class="flex">
+        <div class="flex-child">
+            <h3>Incomplete</h3>
+            <ul>
+                {% for incomplete in incompletes %}
+                <li>
+                    {{ incomplete.goal }}
+                    <a href="{{ url_for('tocomplete', id=incomplete.id) }}" class="btn btn-outline-info">Mark As Complete</a>
+                    <a href="{{ url_for('deletegoal', id=incomplete.id) }}" class="btn btn-outline-info">Delete</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="flex-child">
+            <h3>Complete</h3>
+            <ul>
+                {% for complete in completes %}
+                <li>
+                    {{ complete.goal }}
+                    <a href="{{ url_for('toincomplete', id=complete.id) }}" class="btn btn-outline-info">Mark As Incomplete</a>
+                    <a href="{{ url_for('deletegoal', id=complete.id) }}" class="btn btn-outline-info">Delete</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+{% endblock %}
