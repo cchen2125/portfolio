@@ -1,0 +1,297 @@
+---
+title: "Spotting Spotify Statistics"
+author: "Clara Chen"
+date: "August 12, 2020"
+output: html_document
+---
+
+Everyone loves the music that was popular when they were young. I often hear the criticism that modern music lacks the quality and sophistication of music from the past. Honestly, I somewhat agree. Rap music seemingly dominates the playlists of my generation, and even I, as a teenager, do not understand the appeal. But has music really changed that much over time? Have certain genres become more (or less) common? More or less popular? Has rap truly overtaken other music genres?
+
+To explore these questions, we will use the Spotify song genres data set from [TidyTuesday (January 21)](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-01-21/readme.md).
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(infer)
+library(assertive.base)
+library(RColorBrewer)
+library(moderndive)
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+spotify_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv')
+```
+
+Before we begin, let's adjust the dataset to include only the information we will need. The following code will:
+
+  - create new columns for the year, month, and day of `track_album_release_date` so that it will be easier to group the tracks
+  - convert `track_album_release_date` from a character element to a date element to allow plotting over time
+  - remove the columns that are not relevant to us
+
+```{r warning = FALSE}
+spotify_songs <- spotify_songs %>% 
+  separate(track_album_release_date, c("year", "month", "day"), "-", remove = FALSE, 
+           convert = TRUE) %>% 
+  mutate(track_album_release_date = as.Date(track_album_release_date)) %>% 
+  select(-c(track_id, track_album_name, playlist_subgenre, track_album_id, 
+            playlist_name, playlist_id, key, mode, duration_ms, month, day))
+```
+
+The remaining data includes the following:
+
+  - `track_name`: Song Name
+  - `track_artist`: Song Artist
+  - `track_popularity`: Song Popularity (0-100) where higher is better
+  - `track_album_release_date`: Date when album released
+  - `year`: Year when album released
+  - `playlist_genre`: Playlist genre (EDM, Latin, pop, R&B, rap, or rock)
+  - `danceability`: describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.
+  - `loudness`: The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Values typical range between -60 and 0 db.
+  - `energy`: a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.
+  - `speechiness`: Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value.
+  - `acousticness`: A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.
+  - `instrumentalness`: Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content.
+  - `liveness`: Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live.
+  - `valence`: A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive, while tracks with low valence sound more negative.
+  - `tempo`: The overall estimated tempo of a track in beats per minute (BPM).
+
+# Music Over Time
+
+Let's begin by looking at the prevalance of different genres over time. In general, this data set contains far more songs from the last few years than from earlier decades, so instead of looking at total tracks, let's look at the proportion of genres instead.
+
+```{r message = FALSE}
+spotify_songs %>%
+  group_by(year) %>% 
+  count(playlist_genre) %>% #counts the number of tracks in each genre by year
+  mutate(prop_genre = n/sum(n)) %>% #produces a column for the proportion of music created of each genre by year
+  ggplot(aes(x = year, y = prop_genre, color = playlist_genre)) +
+  geom_smooth(size = 1, se = FALSE) +
+  labs(y = "Proportion", x = "", color = "Genre", subtitle = "Based on Album Release Date", 
+       title = "Which genres are most common on Spotify?", caption = "Data: TidyTuesday") +
+  theme(text = element_text(color = "white"),
+        plot.title = element_text(face = "bold"),
+        rect = element_rect(fill = "black"),
+        axis.text = element_text(color = "white"),
+        panel.background = element_rect(fill = "black"),
+        legend.key = element_rect(fill = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray60")) +
+  scale_color_brewer(palette = "YlGn")
+```
+
+In the last twenty years, it seems that rock music has rapidly gone out of style while newer genres - EDM, rap, and Latin music have become much more widespread. However, it is possible that the downfall of rock could be partially attributed to the increase in variety of genres. 
+
+Some genres tend to have a higher association with certain traits. For example, we might expect rap music to have higher speechiness compared to other genres. As rock music declines and other rise, have the features these genres are correlated with affected overall music trends?
+
+```{r warning = FALSE, message = FALSE}
+#Tidy the data so that the musical features appear in one column and their respective values in another
+spotify_tidy = spotify_songs %>% 
+  pivot_longer(names_to = "feature",
+               values_to = "value",
+               cols = c(danceability, energy, loudness, speechiness,
+                        acousticness, instrumentalness, liveness, valence, tempo)) %>% 
+  sample_n(10000) # to minimize over plotting
+
+spotify_tidy %>%
+  ggplot(aes(y = playlist_genre, x = value, color = playlist_genre)) +
+  geom_boxplot() +
+  facet_wrap(~ feature, scales = "free") +
+  labs(y = "", x = "", color = "Genre", title = "Musical Features by Genre", 
+       caption = "Data: TidyTuesday") +
+ theme(text = element_text(color = "white"),
+        plot.title = element_text(face = "bold"),
+        rect = element_rect(fill = "black"),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "black", color = "white"),
+        legend.key = element_rect(fill = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+       axis.ticks = element_blank(),
+       strip.background = element_rect(fill = "black", color = "white"),
+       strip.text = element_text(color = "white")) +
+  scale_color_brewer(palette = "YlGn")
+
+spotify_tidy %>%
+  filter(feature %in% c("valence", "speechiness", "instrumentalness", "danceability")) %>% 
+  ggplot(aes(x = track_album_release_date, y = value, color = feature)) +
+  geom_point(aes(color = feature), alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "white") +
+  facet_wrap(~feature) +
+  labs(caption = "Data: TidyTuesday", x = "Track Album Release Date", y = "",
+       title = "Change of Music Features Over Time") +
+   theme(text = element_text(color = "white"),
+        plot.title = element_text(face = "bold"),
+        rect = element_rect(fill = "black"),
+        panel.background = element_rect(fill = "black", color = "white"),
+        legend.position = "none",
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+       axis.ticks = element_blank(),
+       strip.background = element_rect(fill = "black", color = "white"),
+       strip.text = element_text(color = "white")) +
+  scale_color_brewer(palette = "YlGn")
+```
+
+The answer is yes...although perhaps only slightly! From the boxplots, we can see that EDM has a lower valence and a higher instrumentalness than the other genres while rock music has the lowest median danceability among the genres. These correlations reflect the overall trends in music, as danceability and instrumentalness have gone up while valence has gone down. The slight increase in speechiness over time could be attributed to both the high speechiness of rap music and the low speechiness of rock.
+
+# Popularity
+
+However, just because some genres are more commonly released in recent years doesn't necessarily mean they are the most popular tracks on Spotify. Does each genre's popularity follow a similar trend as its prevalence through the years?
+
+### Linear Regression Model
+
+```{r warning = FALSE, message = FALSE}
+spotify_songs %>%
+  ggplot(aes(x = track_album_release_date, y = track_popularity, color = playlist_genre)) +
+  geom_point(alpha = 0.05) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Track Album Release Date", y = "Track Popularity out of 100", color = "Genre",
+       title = "Popularity of Genres", caption = "Data: TidyTuesday") +
+  theme(text = element_text(color = "white"),
+        plot.title = element_text(face = "bold"),
+        rect = element_rect(fill = "black"),
+        axis.text = element_text(color = "white"),
+        panel.background = element_rect(fill = "black"),
+        legend.key = element_rect(fill = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray60")) +
+  scale_color_brewer(palette = "YlGn") +
+  scale_y_continuous(limits = c(0,NA))
+```
+
+```{r}
+interaction_model = lm(track_popularity ~ playlist_genre * track_album_release_date,
+                       spotify_songs)
+get_regression_table(interaction_model) %>% 
+  select(term, estimate)
+```
+
+Based on the above visualization, it looks like most genres' popularity trends mirror that of their prevalence. For example, while the proportion of rock music has declined, so has its popularity. EDM music, which has had the greatest increase recently, also has a steep upward climb in popularity as we approach 2020.
+
+From the regression table, we can see that the intercepts between each regression line are vastly different. However, the slopes have relatively little difference from each other, as shown by the small value of interaction term. Specifically, rap and pop both have a slope offset from EDM of -0.005. Even though there may be some error due to rounding, the model suggests that the only difference between the popularity of rap and pop over time is the difference in intercepts: $100.784 - 89.718 = 11.066$. In other words, regardless of release date, pop music is approximately 11 popularity units higher than rap music. Was I wrong about my fellow teenagers' love of rap? Or is this difference merely random?
+
+### Hypothesis Test
+
+Let's do an exploratory data analysis comparing pop and rap music.
+
+```{r message = FALSE}
+#EDA: Data Visualization
+pop_rap = spotify_songs %>% 
+  filter(playlist_genre %in% c("pop", "rap"))
+
+ggplot(pop_rap, aes(x = track_popularity, y = playlist_genre, color = playlist_genre)) +
+  geom_boxplot(size = 0.75) +
+  labs(x = "Track Popularity out of 100", y = "", color = "Genre", title = "Pop vs. Rap", 
+       caption = "Data: TidyTuesday") +
+  theme(text = element_text(color = "white"),
+        plot.title = element_text(face = "bold"),
+        rect = element_rect(fill = "black"),
+        axis.text = element_text(color = "white"),
+        panel.background = element_rect(fill = "black"),
+        legend.key = element_rect(fill = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray60")) +
+  scale_color_manual(values = c("darkgreen", "palegreen"))
+
+#EDA: Summary Statistics
+pop_rap %>% 
+  group_by(playlist_genre) %>%
+  summarize(mean = mean(track_popularity), sd = sd(track_popularity))
+```
+
+Since the boxplots mostly overlap, we don't have enough information yet to infer that one genre is more popular than the other. So, let's do a hypothesis test. 
+
+Our null hypothesis ($H_0$) is that the mean popularity of pop and the mean popularity of rap are the same (i.e. $\bar{x}_p = \bar{x}_r$). On the other hand, our alternative hypothesis ($H_a$) is that the mean popularity of pop is actually greater, as our summary statistics suggest (i.e. $\bar{x}_p > \bar{x}_r$).
+
+```{r}
+# Calculating the sample difference in means (observed statistic)
+spotify_songs %>% 
+  filter(playlist_genre %in% c("pop", "rap")) %>% 
+  specify(response = track_popularity, explanatory = playlist_genre) %>% 
+  calculate(stat = "diff in means", order = c("pop", "rap")) 
+```
+
+```{r warning = FALSE, message = FALSE}
+# Constructing the null distribution
+null_distribution = spotify_songs %>% 
+  filter(playlist_genre %in% c("pop", "rap")) %>% 
+  specify(response = track_popularity, explanatory = playlist_genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 500, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("pop", "rap"))
+
+null_distribution %>% 
+  visualize(fill = "darkgreen") +
+  shade_p_value(obs_stat = 4.53, color = "palegreen", fill = "palegreen", direction = "both") +
+  labs(x = "Difference Between Pop and Rap Mean Popularity", y = "Count", 
+       caption = "Data: TidyTuesday") +
+  theme(plot.background = element_rect(fill = "black"),
+        panel.background = element_rect(fill = "black"),
+        plot.title = element_text(face = "bold"),
+        axis.text = element_text(color = "white"),
+        text = element_text(color = "white"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray60"))
+
+null_distribution %>% 
+  get_p_value(obs_stat = 4.53, direction = "both")
+```
+
+The p-value of 0 (or p-value < 0.00003 due to our sample size of around 300,000) suggests that there is a very small likelihood that we would observe such a big difference in means if pop and rap were equally popular. Therefore, we can reject the null hypothesis and conclude that on average, pop music *is* more popular than rap music. 
+
+## Most popular songs
+
+Finally, just for fun, let's see what the most popular songs on Spotify really are (in January 2020).
+
+```{r warning = FALSE}
+spotify_songs_small = spotify_songs %>% 
+  select(track_name, track_artist, track_popularity, year) %>% #extracts relevant info for the visualization
+  distinct(.keep_all = TRUE) %>% #to removes duplicate tracks
+  arrange(desc(track_popularity)) %>% 
+  unite(name_artist, c(track_name, track_artist), sep = " by ")
+
+#rearranging columns for the visualization
+spotify_songs_small = spotify_songs_small %>% 
+  mutate(year = parenthesize(spotify_songs_small$year, type = "round_brackets")) %>% 
+  unite(name_artist_year, c(name_artist, year), sep = " ") %>% 
+  head(15)
+
+#Creating the color palette for the graph
+newcol <- colorRampPalette(brewer.pal(9, "Greens"))
+greencols <- newcol(15)
+
+spotify_songs_small %>%
+  ggplot(aes(x = track_popularity, y = fct_reorder(name_artist_year, track_popularity))) +
+  geom_col(width = .3, aes(fill = fct_reorder(name_artist_year, track_popularity))) +
+  geom_text(aes(x = 0, y = fct_reorder(name_artist_year, track_popularity),  
+                label = name_artist_year), color = "white", hjust = 0, 
+                position = position_nudge(y = 0.45), fontface = "bold", size = 3) +
+  geom_text(aes(x = track_popularity, y = fct_reorder(name_artist_year, track_popularity), 
+                label = track_popularity), color = "white", hjust = 1, 
+                position = position_nudge(x = -.02, y = 0.45), fontface = "bold", size = 3) +
+  labs(x = "Track Popularity out of 100", y = "", title = "Most Popular Songs on Spotify",
+       caption = "Data: TidyTuesday") +
+  theme(axis.text.y = element_blank(), 
+        axis.ticks = element_blank(), 
+        legend.position = "none",
+        text = element_text(color = "white"),
+        plot.title = element_text(face = "bold"),
+        rect = element_rect(fill = "black"),
+        axis.text = element_text(color = "gray70"),
+        panel.background = element_rect(fill = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_line(color = "gray20")) +
+  scale_fill_manual(values = greencols)
+```
+
+All 15 songs were released after 2018! This result makes sense when compared with the earlier linear regression model as every genre except rock experienced an overall increase in popularity over time. The higher popularity of pop music, which we determined in the hypothesis test, is certainly evident in this chart as well. In fact, "The Box" and "Falling" are the only two rap songs among thirteen other pop songs in the top 15 tracks.
+
+# Final Thoughts
+
+**Has music changed over time?**
+Music has doubtlessly shifted over time. Due to modern production techniques, new genres have appeared, and because of the greater variety of options, genres that once dominated the industry seem to be declining. However, the volume of music from the last few years is drastically greater than the amount in the past, and therefore the "older" genres are still being produced at a much higher rate today than in prior decades. At the same time, this data set only includes six main genres and does not consider fusion genres. Perhaps more detailed genre classification could lead to clearer trends. Moreover, all of these conclusions may be impacted by Spotify's limited library and the typically younger audience on the app.
+
+**How has popularity of different genres changed over time?**
+The linear regression model suggest that popularity follows a similar pattern as prevalence, although there is not a strong correlation there as the raw data is mostly scattered randomly. 
+
+Every generation has their own favorite songs. At the same time, however, there is no need to classify the other groups as having poor taste. Contrary to my own assumptions, pop music and "older" genres are still loved and listened to by my generation. After all, any music is still music - merely created for our enjoyment.
+
