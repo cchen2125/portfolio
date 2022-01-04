@@ -1,7 +1,7 @@
 # Portfolio
 This repository includes some of my past projects related to computer science and data analytics including the following:
 
-## CS50 Final Project (Flask, Python, HTML, CSS, JavaScript)
+## CS50 Final Project (Flask, Python, HTML, CSS, JavaScript, Matplotlib)
 This was my final project for "Introduction to Computer Science" (CS50), which I took in my first semester at Harvard.
 
 ## Statistics in the Real World Final Project (R)
