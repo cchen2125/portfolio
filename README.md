@@ -1,4 +1,4 @@
-# portfolio
+# Portfolio
 This repository includes some of my past projects related to computer science and data analytics including the following:
 
 ## CS50 Final Project (Flask, Python, HTML, CSS, JavaScript)
