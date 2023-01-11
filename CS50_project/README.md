@@ -2,7 +2,7 @@ Documentation for Down Time
 
 URL to video: https://youtu.be/MLkcVaJaKtQ
 
-Down Time is a web application made using flask. As long as all the relevant packages imported at the beginning of app.py are installed, the application should run by typing "flask run" in the terminal when in the implementation directory. I implemented my project using VS Code on my laptop after downloading SQL, python, and all the other things that were mentioned in the "Developing Your Project Locally with VS Code" seminar. The features of Down Time can be broken down into 7 items: the home page, registering and logging in, activities, goals, analytics, recommendations, and account settings.
+Down Time is a web application made using flask. As long as all the relevant packages imported at the beginning of app.py are installed, the application should run by typing "flask run" in the terminal when in the implementation directory. The features of Down Time can be broken down into 7 items: the home page, registering and logging in, activities, goals, analytics, recommendations, and account settings.
 
 The home page provides overall instructions for how to use Down Time. The title says "Welcome to Down Time!" and should include the user's name if they are logged in.
 
