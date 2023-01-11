@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Recommendations
+{% endblock %}
+
+{% block javascript %}
+    <script>
+        // Making sure page is loaded
+        document.addEventListener('DOMContentLoaded',function(){
+            // Defining all necessary variables
+            var mindful = document.getElementById("mindful");
+            var relax = document.getElementById("relax");
+            var misc = document.getElementById("misc");
+            var result = document.getElementById("result");
+
+            var mindful_list = ["Follow a guided meditation on YouTube", 
+                            "Eat your favorite snack slowly while noticing the flavors of every bite",
+                            "Take a walk without using any devices",
+                            "Listen to your favorite song with no distractions",
+                            "Close your eyes and try to relive every moment of your favorite memory"];
+            var relax_list = ["Watch an episode of your favorite show", 
+                            "Do a spa night alone or with friends",
+                            "Take a bath",
+                            "Have a warm drink",
+                            "Journal about something...anything"];
+            var misc_list = ["Write a letter of forgiveness to someone in your life (sending is optional)", 
+                            "Abstain from social media for 24 hours",
+                            "Make a list of things you're grateful for",
+                            "Try to do 5 acts of kindness for other people",
+                            "Write a letter of gratitude to someone in your life (sending is optional)",
+                            "Send someone a photo of a time you enjoyed together and a few fond words of that memory"];
+
+            // Adding Event listeners on the buttons and functions that display a random activity from that array
+            function shuffle(array) {
+                array.sort(() => Math.random() - 0.5);
+            }
+
+            mindful.addEventListener('click', function() {
+                shuffle(mindful_list);
+                result.innerHTML = mindful_list[0];
+            });
+            relax.addEventListener('click', function() {
+                shuffle(relax_list);
+                result.innerHTML = relax_list[0];
+            });
+            misc.addEventListener('click', function() {
+                shuffle(misc_list);
+                result.innerHTML = misc_list[0];
+            });
+
+        });
+    </script>
+{% endblock %}
+
+{% block main %}
+    <h1>
+        Recommendations
+    </h1>
+    <h2>
+        Need inspiration for more wellness activities to try?
+    </h2>
+    <p>Click one of the buttons below to get an activity recommendation from that category</p>
+    <img alt="water droplet" src="static/recommend_image.jpg" width="50%">
+    <div>
+        <button id="mindful" class="btn btn-info">Mindfulness</button>
+        <button id="relax" class="btn btn-info">Relaxation</button>
+        <button id="misc" class="btn btn-info">Miscellaneous</button>
+        <h3 id="result"></h3>
+    </div>
+    
+{% endblock %}

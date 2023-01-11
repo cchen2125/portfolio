@@ -1,0 +1,73 @@
+h1 {
+    color: #35068b;
+}
+
+ul {
+    list-style: none;
+    padding: 0px;
+}
+
+li {
+    padding: 5px;
+}
+
+nav {
+    background-color: #e3f2fd;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-family: 'Tangerine', cursive;
+    font-style: italic;
+    font-size: 40px;
+}
+
+#result {
+    padding: 10px;
+}
+
+h3 {
+    padding: 10px;
+}
+
+img {
+    padding: 10px;
+}
+
+.dark {
+    background-color: #666666;
+}
+
+.pastel {
+    background-color: #e6dff3;
+}
+
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.flex-child {
+    padding: 15px;
+}
+
+.purple {
+    color: purple;
+}
+
+.blue {
+    color: deepskyblue;
+}
+
+.red {
+    color: mediumvioletred;
+}
+
+.green {
+    color: mediumseagreen;
+}
+
+.large {
+    font-size: larger
+}
